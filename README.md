@@ -41,9 +41,10 @@ The plugin provides two tasks:
 Both tasks are executed automatically as dependencies of tasks
 from the Java plugin, but can be executed manually as well.
 
-The plugin also embeds the built Dafny code in the resulting Jar file,
-and automatically discovers any Dafny code embedded in this way
-in the project's dependencies, making them available to the Dafny tool as libraries.
+The plugin also embeds the verified Dafny interface and its Java translation record
+in the resulting Jar file. It automatically discovers matched interface/record pairs
+in the project's dependencies and supplies both to the Dafny tool. A Dafny dependency
+that contains only one of the two artifacts is rejected.
 This allows Dafny projects to define Dafny dependencies and distribute
 themselves as libraries through Gradle-supported repositories such as Maven central.
 For details see [this example](examples/multi-project/).

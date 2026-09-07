@@ -5,12 +5,24 @@ package org.dafny.gradle.plugin;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Map;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
 import org.gradle.api.Project;
 import org.gradle.testfixtures.ProjectBuilder;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 /** A simple unit test for the 'org.dafny.dafny' plugin. */
 class DafnyPluginTest {
+  @TempDir Path temporaryDirectory;
+
   @Test
   void pluginRegistersATask() {
     // Create a test project and apply the plugin
@@ -19,5 +31,52 @@ class DafnyPluginTest {
 
     // Verify the result
     assertNotNull(project.getTasks().findByName("verifyDafny"));
+  }
+
+  @Test
+  void suppliesMatchedInterfaceAndTranslationRecordArguments() throws IOException {
+    var dependency = createDafnyDependency(true, true);
+    var project = ProjectBuilder.builder().build();
+
+    var arguments = Utils.getCommonArguments(project.files(dependency), Map.of());
+
+    assertEquals("--library", arguments.get(0));
+    assertEquals("verified interface", Files.readString(Path.of(arguments.get(1))));
+    assertEquals("--translation-record", arguments.get(2));
+    assertEquals("translation decisions", Files.readString(Path.of(arguments.get(3))));
+  }
+
+  @Test
+  void rejectsADafnyDependencyWithoutItsTranslationRecord() throws IOException {
+    var dependency = createDafnyDependency(true, false);
+    var project = ProjectBuilder.builder().build();
+
+    var error =
+        assertThrows(
+            IOException.class, () -> Utils.getCommonArguments(project.files(dependency), Map.of()));
+
+    assertTrue(error.getMessage().contains("must contain both"));
+    assertTrue(error.getMessage().contains("META-INF/DafnyProgram-java.dtr"));
+  }
+
+  private File createDafnyDependency(boolean includeDoo, boolean includeTranslationRecord)
+      throws IOException {
+    var jar = temporaryDirectory.resolve("dependency.jar").toFile();
+    try (var output = new JarOutputStream(new FileOutputStream(jar))) {
+      if (includeDoo) {
+        writeEntry(output, "META-INF/DafnyProgram.doo", "verified interface");
+      }
+      if (includeTranslationRecord) {
+        writeEntry(output, "META-INF/DafnyProgram-java.dtr", "translation decisions");
+      }
+    }
+    return jar;
+  }
+
+  private static void writeEntry(JarOutputStream output, String name, String contents)
+      throws IOException {
+    output.putNextEntry(new JarEntry(name));
+    output.write(contents.getBytes(StandardCharsets.UTF_8));
+    output.closeEntry();
   }
 }

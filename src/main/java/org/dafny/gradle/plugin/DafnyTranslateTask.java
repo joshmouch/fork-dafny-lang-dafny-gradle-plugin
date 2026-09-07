@@ -14,6 +14,9 @@ public abstract class DafnyTranslateTask extends DafnyBaseTask {
   @OutputFile
   public abstract RegularFileProperty getDooFile();
 
+  @OutputFile
+  public abstract RegularFileProperty getTranslationRecordFile();
+
   @OutputDirectory
   public abstract DirectoryProperty getOutputPath();
 
@@ -31,6 +34,9 @@ public abstract class DafnyTranslateTask extends DafnyBaseTask {
     args.add("java");
     args.add(dooFile.getPath());
     args.addAll(Utils.getCommonArguments(getClasspath().get(), getOptions().get()));
+
+    args.add("--translation-record-output");
+    args.add(getTranslationRecordFile().get().getAsFile().getPath());
 
     args.add("-o");
     args.add(outputDir.getPath());

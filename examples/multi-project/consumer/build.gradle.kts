@@ -3,11 +3,11 @@ plugins {
 }
 
 dafny {
-    dafnyVersion.set("4.9.1")
+    dafnyVersion.set("4.11.0")
 }
 
 dependencies {
     implementation(project(":producer"))
 
-    implementation("org.dafny:DafnyRuntime:4.9.0")
+    implementation("org.dafny:DafnyRuntime:4.11.0")
 }

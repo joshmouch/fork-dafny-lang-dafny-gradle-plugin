@@ -16,6 +16,7 @@ import org.gradle.jvm.tasks.Jar;
 public class DafnyPlugin implements Plugin<Project> {
 
   public static final String META_INF_DOO_FILE_NAME = "DafnyProgram.doo";
+  public static final String META_INF_TRANSLATION_RECORD_FILE_NAME = "DafnyProgram-java.dtr";
 
   public void apply(Project project) {
     // Ensure that the Java plugin is applied.
@@ -38,6 +39,8 @@ public class DafnyPlugin implements Plugin<Project> {
         project.fileTree("src/main/dafny", t -> t.include("**/*.dfy").include("**/*.doo"));
     // TODO: More specific location
     File dooFile = new File(project.getBuildDir(), META_INF_DOO_FILE_NAME);
+    File translationRecordFile =
+        new File(project.getBuildDir(), META_INF_TRANSLATION_RECORD_FILE_NAME);
     // This is not automatically picked up as a source directory for Java compilation,
     // so we have to add it below, but it still seems like a good, idiomatic location.
     File translatedJavaDir =
@@ -71,6 +74,7 @@ public class DafnyPlugin implements Plugin<Project> {
           dafnyTranslateTask.dependsOn(dafnyVerifyProvider);
 
           dafnyTranslateTask.getDooFile().set(dooFile);
+          dafnyTranslateTask.getTranslationRecordFile().set(translationRecordFile);
           dafnyTranslateTask.getClasspath().set(Utils.getCompileClasspath(project));
           dafnyTranslateTask.getOptions().set(extension.getOptionsMap());
           dafnyTranslateTask.getOutputPath().set(translatedJavaDir);
@@ -90,13 +94,14 @@ public class DafnyPlugin implements Plugin<Project> {
         .getTasks()
         .withType(JavaCompile.class, javaCompile -> javaCompile.dependsOn(dafnyTranslateProvider));
 
-    // Embed the .doo file in the .jar file's META-INF
+    // Embed the verified interface and the translation decisions that produced this Java package.
     project
         .getTasks()
         .withType(
             Jar.class,
             jarTask -> {
-              jarTask.metaInf(metaInf -> metaInf.from(dooFile.getPath()));
+              jarTask.metaInf(
+                  metaInf -> metaInf.from(dooFile.getPath(), translationRecordFile.getPath()));
             });
   }
 }

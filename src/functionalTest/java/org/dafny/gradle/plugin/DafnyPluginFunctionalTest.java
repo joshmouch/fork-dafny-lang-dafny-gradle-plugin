@@ -5,6 +5,7 @@ package org.dafny.gradle.plugin;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.jar.JarFile;
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.GradleRunner;
 import org.junit.jupiter.api.Assertions;
@@ -37,12 +38,20 @@ class DafnyPluginFunctionalTest {
 
   @Test
   void canReferenceDependencies() throws IOException {
-    GradleRunner.create()
-        .forwardOutput()
-        .withPluginClasspath()
-        .withArguments("clean", "build")
-        .withProjectDir(new File("examples/multi-project"))
-        .build();
+    var result =
+        GradleRunner.create()
+            .forwardOutput()
+            .withPluginClasspath()
+            .withArguments("clean", "build", "--info")
+            .withProjectDir(new File("examples/multi-project"))
+            .build();
+
+    var producerJar = new File("examples/multi-project/producer/build/libs/producer.jar");
+    try (var jar = new JarFile(producerJar)) {
+      Assertions.assertNotNull(jar.getEntry("META-INF/DafnyProgram.doo"));
+      Assertions.assertNotNull(jar.getEntry("META-INF/DafnyProgram-java.dtr"));
+    }
+    Assertions.assertTrue(result.getOutput().contains("--translation-record"));
   }
 
   // Expected to fail because the producer and consumer use different values of

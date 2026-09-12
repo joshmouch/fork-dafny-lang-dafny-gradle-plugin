@@ -5,7 +5,7 @@ plugins {
 }
 
 dafny {
-    dafnyVersion.set("4.11.0")
+    dafnyVersion.set(providers.environmentVariable("DAFNY_VERSION").orElse("4.11.0"))
 
     optionsMap.put("function-syntax", 3)
 }

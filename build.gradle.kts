@@ -28,6 +28,8 @@ dependencies {
     implementation("org.semver4j:semver4j:5.4.1")
     // Use JUnit Jupiter for testing.
     testImplementation("org.junit.jupiter:junit-jupiter:5.9.1")
+    testImplementation(gradleTestKit())
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.9.1")
 }
 
 gradlePlugin {
@@ -67,6 +69,7 @@ val functionalTestSourceSet =
     }
 
 configurations["functionalTestImplementation"].extendsFrom(configurations["testImplementation"])
+configurations["functionalTestRuntimeOnly"].extendsFrom(configurations["testRuntimeOnly"])
 
 // Add a task to run the functional tests
 val functionalTest by tasks.registering(Test::class) {

@@ -19,6 +19,8 @@ plugins {
 
 dafny {
     dafnyVersion.set("4.9.1")
+    // Optional: bind every plugin task to an exact Dafny executable instead of PATH lookup.
+    dafnyExecutable.set("/path/to/dafny")
 }
 
 dependencies {

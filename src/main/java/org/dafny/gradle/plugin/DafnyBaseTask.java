@@ -15,6 +15,9 @@ import org.gradle.api.tasks.Input;
 public abstract class DafnyBaseTask extends DefaultTask {
 
   @Input
+  public abstract Property<String> getDafnyExecutable();
+
+  @Input
   public abstract MapProperty<String, Object> getOptions();
 
   @Classpath
@@ -24,13 +27,16 @@ public abstract class DafnyBaseTask extends DefaultTask {
 
   protected DafnyCLIResult invokeDafnyCLI(List<String> args)
       throws InterruptedException, IOException {
-    getProject().getLogger().info("Executing Dafny CLI with args: " + String.join(" ", args));
+    var executable = getDafnyExecutable().get();
+    getProject()
+        .getLogger()
+        .info("Executing Dafny CLI " + executable + " with args: " + String.join(" ", args));
 
     // TODO: This is probably a nice utility for managing subprocesses buried somewhere in the
     // Gradle framework
     // we could reuse, especially to avoid potential deadlock on failing to read the output streams.
     Runtime rt = Runtime.getRuntime();
-    String[] cmdArgs = Stream.concat(Stream.of("dafny"), args.stream()).toArray(String[]::new);
+    String[] cmdArgs = Stream.concat(Stream.of(executable), args.stream()).toArray(String[]::new);
     Process pr = rt.exec(cmdArgs);
     int exitCode = pr.waitFor();
 

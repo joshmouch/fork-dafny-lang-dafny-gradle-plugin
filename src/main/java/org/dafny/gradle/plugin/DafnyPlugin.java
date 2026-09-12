@@ -25,6 +25,13 @@ public class DafnyPlugin implements Plugin<Project> {
     project.getPluginManager().apply(JavaPlugin.class);
 
     DafnyExtension extension = project.getExtensions().create("dafny", DafnyExtension.class);
+    extension
+        .getDafnyExecutable()
+        .convention(
+            project
+                .getProviders()
+                .environmentVariable("DAFNY_EXECUTABLE")
+                .orElse("dafny"));
 
     TaskProvider<DafnyVersionCheckTask> dafnyVersionCheckProvider =
         project.getTasks().register("checkDafnyVersion", DafnyVersionCheckTask.class);
@@ -56,6 +63,7 @@ public class DafnyPlugin implements Plugin<Project> {
 
     dafnyVersionCheckProvider.configure(
         dafnyVersionCheckTask -> {
+          dafnyVersionCheckTask.getDafnyExecutable().set(extension.getDafnyExecutable());
           dafnyVersionCheckTask.getClasspath().set(Utils.getCompileClasspath(project));
           dafnyVersionCheckTask.getRequiredVersion().set(extension.getDafnyVersion());
         });
@@ -63,6 +71,7 @@ public class DafnyPlugin implements Plugin<Project> {
         dafnyVerifyTask -> {
           dafnyVerifyTask.dependsOn(dafnyVersionCheckProvider);
 
+          dafnyVerifyTask.getDafnyExecutable().set(extension.getDafnyExecutable());
           dafnyVerifyTask.getSourceFiles().from(dafnySourceFiles);
           dafnyVerifyTask.getClasspath().set(Utils.getCompileClasspath(project));
           dafnyVerifyTask.getOptions().set(extension.getOptionsMap());
@@ -73,6 +82,7 @@ public class DafnyPlugin implements Plugin<Project> {
           dafnyTranslateTask.dependsOn(dafnyVersionCheckProvider);
           dafnyTranslateTask.dependsOn(dafnyVerifyProvider);
 
+          dafnyTranslateTask.getDafnyExecutable().set(extension.getDafnyExecutable());
           dafnyTranslateTask.getDooFile().set(dooFile);
           dafnyTranslateTask.getTranslationRecordFile().set(translationRecordFile);
           dafnyTranslateTask.getClasspath().set(Utils.getCompileClasspath(project));

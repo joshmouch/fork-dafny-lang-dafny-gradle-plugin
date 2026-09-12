@@ -33,7 +33,7 @@ public abstract class DafnyTranslateTask extends DafnyBaseTask {
     args.add("translate");
     args.add("java");
     args.add(dooFile.getPath());
-    args.addAll(Utils.getCommonArguments(getClasspath().get(), getOptions().get()));
+    args.addAll(Utils.getTranslationArguments(getClasspath().get(), getOptions().get()));
 
     args.add("--translation-record-output");
     args.add(getTranslationRecordFile().get().getAsFile().getPath());

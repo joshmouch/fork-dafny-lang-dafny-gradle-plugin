@@ -66,7 +66,20 @@ public class Utils {
     return extracted;
   }
 
-  public static List<String> getCommonArguments(
+  public static List<String> getVerificationArguments(
+      FileCollection classpath, Map<String, Object> options) throws IOException {
+    List<String> args = new ArrayList<>();
+
+    for (var artifact : Utils.dafnyArtifactsForClasspath(classpath.getFiles())) {
+      args.add("--library");
+      args.add(artifact.dooFile());
+    }
+
+    appendOptions(args, options);
+    return args;
+  }
+
+  public static List<String> getTranslationArguments(
       FileCollection classpath, Map<String, Object> options) throws IOException {
     List<String> args = new ArrayList<>();
 
@@ -77,11 +90,14 @@ public class Utils {
       args.add(artifact.translationRecordFile());
     }
 
+    appendOptions(args, options);
+    return args;
+  }
+
+  private static void appendOptions(List<String> args, Map<String, Object> options) {
     for (var entry : options.entrySet()) {
       args.add("--" + entry.getKey() + ":" + entry.getValue());
     }
-
-    return args;
   }
 
   public static Configuration getCompileClasspath(Project project) {

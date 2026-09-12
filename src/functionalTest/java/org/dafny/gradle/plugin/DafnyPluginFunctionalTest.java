@@ -52,6 +52,12 @@ class DafnyPluginFunctionalTest {
       Assertions.assertNotNull(jar.getEntry("META-INF/DafnyProgram-java.dtr"));
     }
     Assertions.assertTrue(result.getOutput().contains("--translation-record"));
+    Assertions.assertTrue(
+        result
+            .getOutput()
+            .contains(
+                "Executing Dafny CLI "
+                    + System.getenv().getOrDefault("DAFNY_EXECUTABLE", "dafny")));
   }
 
   // Expected to fail because the producer and consumer use different values of

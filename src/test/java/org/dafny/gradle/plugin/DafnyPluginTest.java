@@ -38,7 +38,7 @@ class DafnyPluginTest {
     var dependency = createDafnyDependency(true, true);
     var project = ProjectBuilder.builder().build();
 
-    var arguments = Utils.getCommonArguments(project.files(dependency), Map.of());
+    var arguments = Utils.getTranslationArguments(project.files(dependency), Map.of());
 
     assertEquals("--library", arguments.get(0));
     assertEquals("verified interface", Files.readString(Path.of(arguments.get(1))));
@@ -53,10 +53,48 @@ class DafnyPluginTest {
 
     var error =
         assertThrows(
-            IOException.class, () -> Utils.getCommonArguments(project.files(dependency), Map.of()));
+            IOException.class, () -> Utils.getTranslationArguments(project.files(dependency), Map.of()));
 
     assertTrue(error.getMessage().contains("must contain both"));
     assertTrue(error.getMessage().contains("META-INF/DafnyProgram-java.dtr"));
+  }
+
+  @Test
+  void rejectsATranslationRecordWithoutItsVerifiedInterface() throws IOException {
+    var dependency = createDafnyDependency(false, true);
+    var project = ProjectBuilder.builder().build();
+
+    var error =
+        assertThrows(
+            IOException.class, () -> Utils.getTranslationArguments(project.files(dependency), Map.of()));
+
+    assertTrue(error.getMessage().contains("must contain both"));
+    assertTrue(error.getMessage().contains("META-INF/DafnyProgram.doo"));
+  }
+
+  @Test
+  void verificationConsumesTheInterfaceWithoutAJavaTranslationRecord() throws IOException {
+    var dependency = createDafnyDependency(true, true);
+    var project = ProjectBuilder.builder().build();
+
+    var arguments = Utils.getVerificationArguments(project.files(dependency), Map.of());
+
+    assertEquals(2, arguments.size());
+    assertEquals("--library", arguments.get(0));
+    assertEquals("verified interface", Files.readString(Path.of(arguments.get(1))));
+  }
+
+  @Test
+  void bindsEveryDafnyTaskToTheExtensionExecutable() {
+    var project = ProjectBuilder.builder().build();
+    project.getPlugins().apply("org.dafny.dafny");
+    var extension = project.getExtensions().getByType(DafnyExtension.class);
+    extension.getDafnyExecutable().set("/selected/dafny");
+
+    for (var taskName : new String[] {"checkDafnyVersion", "verifyDafny", "translateDafnyToJava"}) {
+      var task = (DafnyBaseTask) project.getTasks().getByName(taskName);
+      assertEquals("/selected/dafny", task.getDafnyExecutable().get());
+    }
   }
 
   private File createDafnyDependency(boolean includeDoo, boolean includeTranslationRecord)
